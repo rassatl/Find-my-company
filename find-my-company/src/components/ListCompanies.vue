@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import CompanyItem from './CompanyItem.vue'
-import Modal from './Modal.vue'
+import Modal from './ModalCompany.vue'
 import CompanyInformations from './CompanyInformations.vue'
 
 const props = defineProps({
@@ -41,7 +41,7 @@ const closeModal = () => {
     </li>
   </ul>
 
-  <Modal :isOpen="isModalOpen" @close="closeModal">
+  <Modal :isOpen="isModalOpen" @close="closeModal" class="modal">
     <CompanyInformations :company="selectedCompany" />
   </Modal>
 </template>
@@ -55,5 +55,8 @@ ul {
 li {
   margin-bottom: 12px;
   cursor: pointer;
+}
+.modal {
+  z-index: 900;
 }
 </style>

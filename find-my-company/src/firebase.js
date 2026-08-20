@@ -7,7 +7,7 @@ import { getFirestore } from 'firebase/firestore'
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyB90Q5hbE3a5QWo510CCJI0Wm21sczeIaQ",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "find-my-company-30652.firebaseapp.com",
   projectId: "find-my-company-30652",
   storageBucket: "find-my-company-30652.firebasestorage.app",
