@@ -6,7 +6,7 @@ import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 
 const mapContainer = ref(null);
-const props = defineProps({ isOpen: Boolean});
+const props = defineProps({selectedSpeciality: String});
 const emit = defineEmits(['update-visible-companies'])
 
 const companies = ref([])
@@ -96,23 +96,40 @@ const fetchCompaniesAndAddMarkers = async () => {
 
 // Redimensionner la carte lorsque la sidebar change d'état
 watch(
-  () => props.isOpen,
   () => {
     setTimeout(() => {
       map.invalidateSize();
     }, 400);
   }
 );
+
+watch(
+  () => props.selectedSpeciality,
+  (newCategory) => {
+    if (!map) return;
+    companies.value.forEach(company => {
+      if (company.marker) {
+        if (!newCategory || company.speciality === newCategory) {
+          if (!map.hasLayer(company.marker)) {
+            company.marker.addTo(map);
+          }
+        } else {
+          if (map.hasLayer(company.marker)) {
+            company.marker.remove();
+          }
+        }
+      }
+    });
+    updateVisibleCompanies();
+  },
+  { immediate: true }
+);
+
 </script>
 
 <template>
   <!-- Conteneur pour la carte Leaflet -->
-  <div
-    id="map"
-    ref="mapContainer"
-    class="map-container"
-    :class="{ 'sidebar-open': isOpen, 'sidebar-closed': !isOpen }"
-  ></div>
+  <div id="map" ref="mapContainer" class="map-container"></div>
 </template>
 
 <style scoped>

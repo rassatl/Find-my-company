@@ -1,15 +1,25 @@
 <script setup>
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref, computed, inject } from 'vue'
 import { db } from '../firebase'
 import { collection, getDocs } from 'firebase/firestore'
-import CompanyItem from './CompanyItem.vue'
 import Modal from './Modal.vue';
 import AddCompanyForm from './AddCompanyForm.vue';
 import ListCompanies from './ListCompanies.vue';
+import LangSwitcher from './LangSwitcher.vue'
+
+const isMobile = ref(false)
+const listeDeroulanteWidth = ref(400)
+const listeDeroulanteDefaultSize = 0
+
+const t = inject('t')
+
+// popup pour indiquer que la fonctionnalité n'est pas encore disponible
+import UnavailablePopup from './UnavailablePopup.vue'
+const popupRef = ref()
 
 // Props et événements
 const props = defineProps({isOpen: Boolean, visibleCompanies: Array})
-const emit = defineEmits(['toggle'])
+const emit = defineEmits(['toggle', 'update-speciality'])
 
 const isModalOpen = ref(false);
 const companies = ref([])
@@ -55,15 +65,37 @@ function toggleSideBar() {
   emit('toggle')
 }
 
+// Fonction pour afficher un message d'indisponibilité de la fonctionnalité
+function handleClick() {
+  popupRef.value.showPopup("Not available yet!");
+}
+
+onMounted(() => {
+  const updateSize = () => {
+    isMobile.value = window.innerWidth <= 768
+    listeDeroulanteWidth.value = isMobile.value ? 280 : 400
+  }
+
+  window.addEventListener('resize', updateSize)
+  updateSize()
+})
+
 onMounted(fetchCompanies);
 </script>
 
 <template>
   <div>
-    <div
-      class="sidebar"
-      :class="{ closed: !props.isOpen }"
-      :style="{ width: props.isOpen ? '400px' : '0' }">
+    <div class="sidebar" :class="{ closed: !props.isOpen }" :style="{ width: props.isOpen ? listeDeroulanteWidth+'px' : listeDeroulanteDefaultSize+'px' }">
+
+      <!-- Bouton pour se connecter -->
+      <div v-if="props.isOpen" class="connection-action">
+        <button @click="handleClick" class="refresh-button" aria-label="Rafraîchir"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-user"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button>
+      </div>
+
+      <!-- Bouton pour afficher la liste des entreprises en attentes --> 
+      <div v-if="props.isOpen" class="list-action">
+        <button @click="handleClick" class="refresh-button" aria-label="Rafraîchir"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-list"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></button>
+      </div>
 
       <!-- Bouton pour rafraîchir la liste des entreprises --> 
       <div v-if="props.isOpen" class="refresh-action">
@@ -71,25 +103,28 @@ onMounted(fetchCompanies);
       </div>
 
       <!-- Bouton d'ajout d'entreprise -->
-      <div v-if="props.isOpen" class="top-right-action">
+      <div v-if="props.isOpen" class="add-company-action">
         <button @click="openModal" class="plus-button" aria-label="Ajouter">+</button>
+      </div>
+      
+      <div v-if="props.isOpen" class="lang-switcher">
+        <LangSwitcher />
       </div>
       
       <hr class="separator" />
       <h1>Find My Company</h1>
       <hr class="separator" />
-      <h2 v-if="props.isOpen">Liste des entreprises</h2>
+      <h2 v-if="props.isOpen">{{ t('dropdownMenu.companyList') }}</h2>
 
       <!-- Barre de filtre pour les spécialités -->
       <div v-if="props.isOpen" class="filter-bar">
-        <label for="speciality-select">Spécialité :</label>
-        <select id="speciality-select" v-model="selectedSpeciality" required>
-            <option value="" >Toutes</option>
-            <option value="Développement Logiciel, Tests et Qualité">Développement Logiciel, Tests et Qualité</option>
-            <option value="IA & Big Data">IA & Big Data</option>
+        <label for="speciality-select">{{ t('dropdownMenu.specialities') }} :</label>
+        <select id="speciality-select" v-model="selectedSpeciality" @change="$emit('update-speciality', selectedSpeciality)" required>
+            <option value="" >{{ t('dropdownMenu.defaultFilter') }}</option>
+            <option value="Développement Logiciel, Tests et Qualité">{{ t('dropdownMenu.dltq') }}</option>
+            <option value="IA & Big Data">{{ t('dropdownMenu.iabd') }}</option>
         </select>
       </div>
-
       <!-- Affiche la liste des entreprises si la sidebar est visible -->
       <ListCompanies v-if="props.isOpen" :companies="filteredCompanies" />
     </div>
@@ -104,12 +139,13 @@ onMounted(fetchCompanies);
       class="toggle-button"
       @click="toggleSideBar"
       :class="{ closed: !props.isOpen }"
-      :style="{ left: props.isOpen ? '400px' : '0' }"
+      :style="{ left: props.isOpen ? listeDeroulanteWidth+'px' : listeDeroulanteDefaultSize+'px' }"
     >
       <!-- Flèche pour savoir dans quel sens la sidebar va aller si on clique sur le bouton -->
       <span><i :class="['arrow', props.isOpen ? 'left' : 'right']"></i></span> 
     </button>
   </div>
+  <UnavailablePopup ref="popupRef" />
 </template>
 
 <style scoped>
@@ -141,10 +177,15 @@ h2 {
   overflow-y: auto;
   transition: transform 0.3s ease, width 0.3s ease;
   box-sizing: border-box;
-  z-index: 1000;
+  z-index: 800;
 }
 .sidebar.closed {
   transform: translateX(-100%);
+}
+@media (max-width: 768px) {
+  .sidebar {
+    width: 200px;
+  }
 }
 
 .toggle-button {
@@ -195,10 +236,20 @@ select {
   font-size: 1rem;
 }
 
-.top-right-action {
+.add-company-action {
   position: absolute;
   top: -5px;
   right: 0px;
+}
+.list-action {
+  position: absolute;
+  top: 0px;
+  left: 30px;
+}
+.connection-action {
+  position: absolute;
+  top: 0px;
+  left: 0px;
 }
 
 .plus-button {
@@ -257,5 +308,16 @@ select {
   color: var(--red-btn-hover);
   transform: scale(1.2);
 }
+
+.lang-switch {
+  display: flex;
+  gap: 5px;
+  position: absolute;
+  top: 1.5px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+
 
 </style>

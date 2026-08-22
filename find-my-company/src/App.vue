@@ -6,6 +6,7 @@ import MapComponent from './components/MapView.vue'
 // État centralisé pour l'ouverture de la sidebar
 const isOpen = ref(true)
 const visibleCompanies = ref([])
+const selectedSpeciality = ref('');
 
 // Watcher pour logger les changements
 // watch(isOpen, (newVal) => {
@@ -19,7 +20,7 @@ const visibleCompanies = ref([])
 
 
 <template>
-  <ListeDeroulante :isOpen="isOpen" :visibleCompanies="visibleCompanies" @toggle="isOpen = !isOpen" />
-  <MapComponent :isOpen="isOpen" @update-visible-companies="visibleCompanies = $event"/>
+  <ListeDeroulante :isOpen="isOpen" :visibleCompanies="visibleCompanies" @toggle="isOpen = !isOpen" @update-speciality="selectedSpeciality = $event"/>
+  <MapComponent :selectedSpeciality="selectedSpeciality" @update-visible-companies="visibleCompanies = $event"/>
 </template>
  
