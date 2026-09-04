@@ -1,6 +1,6 @@
-# 🚀 Project Name
+# 🚀 Find my company
 
-**Project Name** is a powerful and flexible web application built with **Vue.js** and **Leaflet**, designed to showcase and manage company locations on an interactive map. Users can filter companies by specialties, view company details, and interact with the map for enhanced experience.
+**Find my company** is a powerful and flexible web application built with **Vue.js** and **Leaflet**, designed to showcase and manage company locations on an interactive map. Users can filter companies by specialties, view company details, and interact with the map for enhanced experience.
 
 ## 📝 Table of Contents
 - [About](#about)
@@ -42,13 +42,13 @@ To get started with this project locally, follow these steps:
 1. **Clone the repository**:
 
     ```bash
-    git clone https://github.com/yourusername/project-name.git
+    git clone https://github.com/rassatl/ProjetPerso.git
     ```
 
 2. **Navigate to the project folder**:
 
     ```bash
-    cd project-name
+    cd find-my-company
     ```
 
 3. **Install dependencies**:
