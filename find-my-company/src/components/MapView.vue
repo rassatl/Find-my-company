@@ -84,7 +84,9 @@ const fetchCompaniesAndAddMarkers = async () => {
       const { x, y, name } = company;
       if (x && y && name) {
         const marker = L.marker([x, y], {icon: redIcon}).addTo(map);
-        marker.bindPopup(name);
+        const popupContent = document.createElement('span');
+        popupContent.textContent = name;
+        marker.bindPopup(popupContent);
         companyList.push({ ...company, marker });
       }
     });

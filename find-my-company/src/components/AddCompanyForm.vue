@@ -25,6 +25,38 @@ const x = ref('');
 const y = ref('');
 const isLoading = ref(false);
 
+const allowedSpecialities = new Set([
+  'Développement Logiciel, Tests et Qualité',
+  'IA & Big Data'
+]);
+
+const normalizeText = (value, maxLength) => value.trim().replace(/\s+/g, ' ').slice(0, maxLength);
+
+const validateCompany = () => {
+  const fields = {
+    speciality: speciality.value,
+    name: normalizeText(name.value, 120),
+    address: normalizeText(address.value, 200),
+    city: normalizeText(city.value, 100),
+    country: normalizeText(country.value, 100),
+    pc: normalizeText(pc.value, 20)
+  };
+  const latitude = Number(x.value);
+  const longitude = Number(y.value);
+
+  if (!allowedSpecialities.has(fields.speciality) || Object.values(fields).some(value => !value)) {
+    return null;
+  }
+  if (!/^[0-9A-Za-zÀ-ÿ][0-9A-Za-zÀ-ÿ\s-]{1,19}$/.test(fields.pc)) {
+    return null;
+  }
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+    return null;
+  }
+
+  return { ...fields, x: latitude, y: longitude };
+};
+
 let map = null;
 let marker = null;
 const mapContainer = ref(null);
@@ -112,11 +144,15 @@ watch([address, city, pc, country], ([newAddress, newCity, newPc, newCountry]) =
 
 // Fonction pour soumettre le formulaire
 const submitForm = async () => {
-  if (!speciality.value || !name.value || !address.value || !city.value || !country.value || !pc.value || !x.value || !y.value) {
-    alert("Tous les champs sont obligatoires !");
+  if (isLoading.value) return;
+
+  const company = validateCompany();
+  if (!company) {
+    alert("Les informations saisies sont invalides.");
     return;
   }
 
+  isLoading.value = true;
   try {
     // Vérification des coordonnées GPS
     const reverseUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${x.value}&lon=${y.value}&zoom=3&addressdetails=1`;
@@ -134,16 +170,7 @@ const submitForm = async () => {
       return;
     }
 
-    await addDoc(collection(db, 'companies'), {
-      speciality: speciality.value,
-      name: name.value,
-      address: address.value,
-      city: city.value,
-      country: country.value,
-      pc: pc.value,
-      x: x.value,
-      y: y.value
-    });
+    await addDoc(collection(db, 'companies'), company);
 
     speciality.value = '';
     name.value = '';
@@ -159,6 +186,8 @@ const submitForm = async () => {
     emit('close');
   } catch (e) {
     console.error("Erreur lors de l'ajout de l'entreprise : ", e);
+  } finally {
+    isLoading.value = false;
   }
 };
 </script>
@@ -177,7 +206,7 @@ const submitForm = async () => {
       </div>
       <div class="form-group">
         <label for="name">{{ t('addCompanyForm.companyName') }}</label>
-        <input id="name" v-model="name" required />
+        <input id="name" v-model="name" maxlength="120" required />
       </div>
       <div class="form-group">
         <label for="country">{{ t('addCompanyForm.companyState') }}</label>
@@ -190,15 +219,15 @@ const submitForm = async () => {
       </div>
       <div class="form-group">
         <label for="address">{{ t('addCompanyForm.companyAddress') }}</label>
-        <input id="address" v-model="address" required />
+        <input id="address" v-model="address" maxlength="200" required />
       </div>
       <div class="form-group">
         <label for="city">{{ t('addCompanyForm.companyCity') }}</label>
-        <input id="city" v-model="city" required />
+        <input id="city" v-model="city" maxlength="100" required />
       </div>
       <div class="form-group">
         <label for="pc">{{ t('addCompanyForm.companyPC') }}</label>
-        <input id="pc" v-model="pc" required />
+        <input id="pc" v-model="pc" maxlength="20" required />
       </div>
       <button type="submit" class="submit-button">{{ t('addCompanyForm.addCompanyButton') }}</button>
     </form>

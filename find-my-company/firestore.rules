@@ -1,0 +1,37 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /companies/{companyId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly([
+        'speciality', 'name', 'address', 'city', 'country', 'pc', 'x', 'y'
+      ])
+      && request.resource.data.speciality in [
+        'Développement Logiciel, Tests et Qualité', 'IA & Big Data'
+      ]
+      && request.resource.data.name is string
+      && request.resource.data.name.size() > 0
+      && request.resource.data.name.size() <= 120
+      && request.resource.data.address is string
+      && request.resource.data.address.size() > 0
+      && request.resource.data.address.size() <= 200
+      && request.resource.data.city is string
+      && request.resource.data.city.size() > 0
+      && request.resource.data.city.size() <= 100
+      && request.resource.data.country is string
+      && request.resource.data.country.size() > 0
+      && request.resource.data.country.size() <= 100
+      && request.resource.data.pc is string
+      && request.resource.data.pc.size() > 0
+      && request.resource.data.pc.size() <= 20
+      && request.resource.data.x is number
+      && request.resource.data.x >= -90
+      && request.resource.data.x <= 90
+      && request.resource.data.y is number
+      && request.resource.data.y >= -180
+      && request.resource.data.y <= 180;
+      allow update, delete: if false;
+    }
+  }
+}
